@@ -515,6 +515,64 @@ knnFit1 <- train(Y ~., # predict Y from everything else
 plot(knnFit1)
 \end{lstlisting}
 
+\section{Logistic Regression}
+\subsection{Introduction}
+\begin{lstlisting}[language=R]
+setwd("C:/Users/Claudeon/OneDrive - National University of Singapore/Year 1 Sem 2/DSA1101/Tutorials/Tutorial 5")
+Titanic_dataset= read.csv("Titanic.csv",stringsAsFactors=TRUE)
+
+## total records in dataset
+n=dim(Titanic_dataset)[1]
+
+## Randomly split into 20 datasets 
+n_folds=20
+folds_j <- sample(rep(1:n_folds, length.out = n))
+
+misC_lr=0;
+
+for (j in 1:n_folds) {
+	test <- which(folds_j == j)
+	train=Titanic_dataset[-c(test),]
+
+	Survival_lr<- glm(Survived~. ,data=train, family=binomial(link="logit"))
+
+	prob_lr <- predict(Survival_lr, Titanic_dataset[test,1:3],type='response')
+	pred_lr <- as.factor(ifelse(prob_lr > 0.5, "Yes", "No"))
+
+
+    misC_lr = misC_lr + sum(pred_lr!=Titanic_dataset[test,4])
+
+
+}
+misC_lr =misC_lr /n
+\end{lstlisting}
+
+\subsection{Theory}
+\begin{itemize}
+ \item Logistic function
+ $$f(z) = \frac{\exp(z)}{1+\exp(z)}, z \in (-\infty,\infty)$$
+ $$\lim_{z\rightarrow \infty}f(z) = 1, \lim_{z\rightarrow -\infty}f(z) = 0$$
+ \item Suppose there is only a single feature variable $X$, then the model for logistic regression is
+ $$ \pi(X) = P(Y=1|X) = \frac{\exp(\beta_0 + \beta_1 X)}{1 +\exp(\beta_0 + \beta_1 X)} $$
+ $$ P(Y=0|X) = \frac{1}{1 +\exp(\beta_0 + \beta_1 X)} $$
+ \item \textbf{Maximum Likelihood Estimation (MLE)} To estimate a parameter, the method of maximum likelihood chooses the parameter value that makes $L$ as large as possible.
+ \begin{equation*}
+ \begin{split}
+  L(\beta_0, \beta_1) &= \prod_{i=1}^n \left[\frac{\exp(\beta_0 + \beta_1 x_i)}{1 +\exp(\beta_0 + \beta_1 x_i)}\right]^{y_i} \left[\frac{1}{1 +\exp(\beta_0 + \beta_1 x_i)}\right]^{1-y_i}\\
+  &= \prod_{i=1}^n \frac{\exp[y_i(\beta_0 + \beta_1 x_i)]}{1 +\exp(\beta_0 + \beta_1 x_i)}
+ \end{split} 
+ \end{equation*}
+ The log-likelihood function is
+ $$\ln L(\beta_0, \beta_1) = \sum_{i=1}^n \{y_i(\beta_0 + \beta_1 x_i) - \ln(1 +\exp(\beta_0 + \beta_1 x_i))  \} $$
+ To obtain the MLE, we take the derivatives $\frac{\partial L}{\partial \beta_0}$ and $\frac{\partial L}{\partial \beta_1}$. The maximum likelihood estimates $\hat{\beta_0}$ and $\hat{\beta_1}$ are solutions to the equations:
+ \begin{equation}
+ \sum_{i=1}^n\left\{ y_i - \frac{\exp(\beta_0 + \beta_1 x_i)}{1+\exp(\beta_0 + \beta_1 x_i)}\right\} = 0
+ \end{equation}
+ \begin{equation}
+ \sum_{i=1}^n\left\{x_i y_i - x_i\frac{\exp(\beta_0 + \beta_1 x_i)}{1+\exp(\beta_0 + \beta_1 x_i)}\right\} = 0
+ \end{equation}
+\end{itemize}
+
 \section{Decision Trees}
 \subsection{Introduction}
 \textbf{‘Branch’} refers to the outcome of a decision and is visualized
@@ -543,6 +601,7 @@ fit <- rpart(subscribed~job + marital + education +
              control=rpart.control(minsplit=1, maxdepth=4),
                # minsplit =
                # maxdepth = max depth of tree
+               # cp = complexity depth, larger -> more complex
              parms=list(split="information"))
                # "information" => entropy algo
                # "gini"        => gini algo
